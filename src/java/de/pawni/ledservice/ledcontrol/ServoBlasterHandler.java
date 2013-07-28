@@ -32,7 +32,8 @@ public class ServoBlasterHandler {
 		try {
 			OutputStream out = new FileOutputStream(servoFile);
 			OutputStreamWriter writer = new OutputStreamWriter(out);
-			writer.write(pin+"="+value);
+			writer.write(pin+"="+value+"\n");
+			writer.flush();
 			writer.close();
 		} catch(IOException e) {
 			System.out.println("IOError: "+e.toString());

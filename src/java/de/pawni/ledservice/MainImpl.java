@@ -6,15 +6,17 @@
  */
 package de.pawni.ledservice;
 
-import java.awt.Color;
 import java.rmi.AccessException;
 import java.rmi.AlreadyBoundException;
+import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
+import de.pawni.ledservice.common.model.LEDColor;
 import de.pawni.ledservice.common.model.LEDStatus;
 import de.pawni.ledservice.ledcontrol.LEDController;
 
@@ -38,7 +40,7 @@ public class MainImpl implements Main{
 			showHelp();
 			return;
 		}
-		String command = args[0];
+		String command = args[0].split("=")[0];
 		System.out.println("Got command: " + command);
 		try {
 			switch(command.toLowerCase()) {
@@ -54,6 +56,9 @@ public class MainImpl implements Main{
 				case "setrgb":
 					setRGB(args);
 					break;
+				case "list":
+					showRegistry();
+					break;
 				default:
 					showHelp();
 					break;
@@ -68,7 +73,7 @@ public class MainImpl implements Main{
 			System.out.println("An RemoteException occured: "+ e.getMessage());
 			e.printStackTrace();
 		}
-
+		System.out.println("Command " + command + " executed");
 	}
 	
 	public static void startup() throws RemoteException {
@@ -76,22 +81,22 @@ public class MainImpl implements Main{
 	}
 	
 	public static void shutdown() throws AccessException, RemoteException, NotBoundException {
-		MainImpl instance = connectToRMI();
+		Main instance = connectToRMI();
 		instance.stop();
 	}
 	
 	public static void showStatus() throws AccessException, RemoteException, NotBoundException {
-		MainImpl instance = connectToRMI();
+		Main instance = connectToRMI();
 		LEDStatus status = instance.status();
 		System.out.println("Status is:\n"+status);
 	}
 	
 	public static void setRGB(String[] args) throws IllegalArgumentException, AccessException, RemoteException, NotBoundException{
-		if(args.length != 2) {
+		if(args[0].split("=").length != 2) {
 			throw new IllegalArgumentException("No color to set specified.");
 		}
-		LEDStatus status = new LEDStatus(args[1]);
-		MainImpl instance = connectToRMI();
+		LEDStatus status = new LEDStatus(args[0].split("=")[1]);
+		Main instance = connectToRMI();
 		instance.setLEDStatus(status);
 	}
 	
@@ -104,8 +109,9 @@ public class MainImpl implements Main{
 		System.out.println("setrgb #AABBCC - sets the color to #AABBCC");
 	}
 	
-	public static MainImpl connectToRMI() throws AccessException, RemoteException, NotBoundException {
-		MainImpl res = (MainImpl) getRegistry().lookup(lookupURL);
+	public static Main connectToRMI() throws AccessException, RemoteException, NotBoundException {
+		Remote r = getRegistry().lookup(lookupURL);
+		Main res = (Main) r;
 		return res;
 	}
 	
@@ -118,6 +124,14 @@ public class MainImpl implements Main{
 		
 	}
 	
+	public static void showRegistry() throws RemoteException, NotBoundException{
+		Registry r = getRegistry();
+		System.out.println("Found in this Registry: ");
+		for (String s : r.list()) {
+			System.out.println(s + " - type: " + r.lookup(s).getClass());
+		}
+	}
+	
 	public MainImpl() {
 		
 	}
@@ -126,24 +140,42 @@ public class MainImpl implements Main{
 	
 	public void start() throws RemoteException{
 		System.out.println("Starting LEDService");
-		UnicastRemoteObject.exportObject(this);
+		UnicastRemoteObject.exportObject(this, 1099);
 		
 		Registry r = getRegistry();
 		
 		try {
 			r.bind(lookupURL, this);
+			
 		} catch (AlreadyBoundException e) {
 			throw new RemoteException("Already bound", e);
 		}
 		
+		String[] list = r.list();
+		System.out.println("In this registry: "+list[0]);
+		
+		//CoreService.start();
 		// start other things ..
 		System.out.println("LEDService started");
 	}
 	
 	public void stop() {
 		System.out.println("Stopping LEDService");
-		// stop servicethread
-		LEDController.getInstance().setRGB(new LEDStatus(Color.BLACK));
+		// stop servicethread	
+		LEDController.getInstance().setRGB(new LEDStatus(new LEDColor(0, 0, 0)));
+		//CoreService.stop();
+		try {
+			UnicastRemoteObject.unexportObject(this, true);
+		} catch (NoSuchObjectException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			getRegistry().unbind(lookupURL);
+		} catch (RemoteException | NotBoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out.println("Stopped LEDService");
 	}
 	
@@ -153,7 +185,7 @@ public class MainImpl implements Main{
 
 
 	public void setLEDStatus(LEDStatus status) {
-		System.out.println("Setting LEDStatus: "+status);
+		System.out.println("Setting LEDStatus: "+status.toString());
 		LEDController.getInstance().setRGB(status);
 	}
 

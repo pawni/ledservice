@@ -6,17 +6,22 @@
  */
 package de.pawni.ledservice.common.model;
 
-import java.awt.Color;
+import java.io.Serializable;
 
 /**
  * @author Nick Pawlowski
  *
  */
-public class LEDStatus {
+public class LEDStatus implements Serializable {
 	
-	private Color color;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3112159129465260266L;
 	
-	public LEDStatus(Color ledColor) {
+	private LEDColor color;
+	
+	public LEDStatus(LEDColor ledColor) {
 		color = ledColor;
 	}
 	
@@ -28,12 +33,12 @@ public class LEDStatus {
 		int blue = Integer.valueOf(hex.substring(3,5), 16);
 		int green = Integer.valueOf(hex.substring(5,7), 16);
 		
-		color = new Color(red, green, blue);
+		color = new LEDColor(red, green, blue);
 		
 	}
 	
 	public boolean isOn() {
-		return color.getRGB() > 0;
+		return color.getRed() > 0 || color.getGreen() > 0 || color.getBlue() > 0;
 	}
 	
 	public String getHexColor() {
@@ -47,7 +52,7 @@ public class LEDStatus {
 	}
 	
 	public String toString() {
-		return isOn() ? "LED on" : "LED off" + "\n" + 
+		return isOn() ? "LED on" : "LED off" + "\n" + "test" + "\n" +
 				"Color: " + getHexColor();
 	}
 	

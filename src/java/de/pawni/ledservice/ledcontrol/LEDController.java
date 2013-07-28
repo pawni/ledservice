@@ -27,8 +27,8 @@ public class LEDController {
 	
 	private LEDController() {
 		pinRed = 2;
-		pinGreen = 5;
-		pinBlue = 6;
+		pinGreen = 6;
+		pinBlue = 5;
 		
 		redPin = new ServoPin(pinRed);
 		greenPin= new ServoPin(pinGreen);
@@ -52,8 +52,11 @@ public class LEDController {
 	}
 	
 	private void setRGB(int red, int green, int blue) {
+		System.out.println("Setting red to "+red);
 		redPin.setValue(red);
+		System.out.println("Setting red to "+green);
 		greenPin.setValue(green);
+		System.out.println("Setting red to "+blue);
 		bluePin.setValue(blue);
 	}
 }
