@@ -29,11 +29,14 @@ public class LEDStatus implements Serializable {
 		if(hex.length() != 7) {
 			throw new IllegalArgumentException("Input Value is no RGB Hex String");
 		}
-		int red = Integer.valueOf(hex.substring(1,3), 16);
-		int blue = Integer.valueOf(hex.substring(3,5), 16);
-		int green = Integer.valueOf(hex.substring(5,7), 16);
-		
-		color = new LEDColor(red, green, blue);
+		try {
+			int red = Integer.valueOf(hex.substring(1,3), 16);
+			int green = Integer.valueOf(hex.substring(3,5), 16);
+			int blue = Integer.valueOf(hex.substring(5,7), 16);
+			color = new LEDColor(red, green, blue);
+		} catch(NumberFormatException e) {
+			throw new IllegalArgumentException("Input Value is no RGB Hex String", e);
+		}
 		
 	}
 	
@@ -45,14 +48,14 @@ public class LEDStatus implements Serializable {
 		int red = color.getRed();
 		int green = color.getGreen();
 		int blue = color.getBlue();
-		String hex = "#" + Integer.toString(red, 16).toUpperCase() +
-				Integer.toString(green, 16).toUpperCase() +
-				Integer.toString(blue, 16).toUpperCase();
+		String hex = "#" + (red > 16 ? "" : "0") + Integer.toString(red, 16).toUpperCase() +
+				(green > 16 ? "" : "0") + Integer.toString(green, 16).toUpperCase() +
+				(blue > 16 ? "" : "0") + Integer.toString(blue, 16).toUpperCase();
 		return hex;
 	}
 	
 	public String toString() {
-		return isOn() ? "LED on" : "LED off" + "\n" + "test" + "\n" +
+		return (isOn() ? "LED on - " : "LED off - ") +
 				"Color: " + getHexColor();
 	}
 	
