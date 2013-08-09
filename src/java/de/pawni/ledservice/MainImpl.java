@@ -15,10 +15,12 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Timer;
 
 import de.pawni.ledservice.common.model.LEDColor;
 import de.pawni.ledservice.common.model.LEDStatus;
 import de.pawni.ledservice.ledcontrol.LEDController;
+import de.pawni.ledservice.service.CalenderScheduler;
 
 /**
  * @author Nick Pawlowski
@@ -95,7 +97,9 @@ public class MainImpl implements Main{
 		if(args[0].split("=").length != 2) {
 			throw new IllegalArgumentException("No color to set specified.");
 		}
+		System.out.println("Got color "+args[0].split("=")[1]);
 		LEDStatus status = new LEDStatus(args[0].split("=")[1]);
+		System.out.println("Set Status to "+status.toString());
 		Main instance = connectToRMI();
 		instance.setLEDStatus(status);
 	}
@@ -136,7 +140,7 @@ public class MainImpl implements Main{
 		
 	}
 	
-	
+	private Timer timer;
 	
 	public void start() throws RemoteException{
 		System.out.println("Starting LEDService");
@@ -156,6 +160,12 @@ public class MainImpl implements Main{
 		
 		//CoreService.start();
 		// start other things ..
+		
+		timer = new Timer(true);
+		int recurrentRate = 6 * 60; // minutes
+		CalenderScheduler cs = new CalenderScheduler(recurrentRate);
+		timer.scheduleAtFixedRate(cs, 0, recurrentRate * 60 * 1000);
+		
 		System.out.println("LEDService started");
 	}
 	
@@ -186,7 +196,7 @@ public class MainImpl implements Main{
 
 	public void setLEDStatus(LEDStatus status) {
 		System.out.println("Setting LEDStatus: "+status.toString());
-		LEDController.getInstance().setRGB(status);
+		LEDController.getInstance().fadeToRGB(status);
 	}
 
 }
